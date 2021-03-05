@@ -206,7 +206,7 @@ class Summerizer(object):
         return True
 
     def selection(self, population):
-        max_sent = int(0.3*len(self.sentences))
+        max_sent = int(0.2*len(self.sentences))
         if len(self.sentences) < 4:
             max_sent = len(self.sentences)       
         new_population = []
@@ -347,7 +347,7 @@ class Summerizer(object):
         population = self.generate_population(self.population_size)
         
         for i in tqdm(range(n_iterations)):
-            for individual in population:
+            for i, individual in enumerate(population):
                 individual = list(individual)
                 fitness_candidate = compute_fitness(self.title, self.sentences, individual[0], self.simWithTitle, self.simWithDoc, self.sim2sents, self.number_of_nouns, self.order_params)
                 if fitness_candidate > individual[1]:
@@ -356,9 +356,9 @@ class Summerizer(object):
                 if fitness_candidate > gbest_fitness_value:
                     gbest_fitness_value = fitness_candidate
                     gbest_position = individual[0]
-                individual = tuple(individual)
+                population[i] = tuple(individual)
 
-            for individual in population:
+            for i, individual in enumerate(population):
                 individual = list(individual)
                 particle_position_vector = np.array(individual[0])
                 pbest_position = np.array(individual[2]) 
@@ -372,7 +372,7 @@ class Summerizer(object):
                 new_velocity = np.array(individual[3])
                 particle_position_vector = self.subtraction(particle_position_vector, new_velocity)
                 individual[0] = particle_position_vector.tolist()
-                individual = tuple(individual)
+                population[i] = tuple(individual)
 
             populationGA = self.selection(population)
             populationGA = sorted(populationGA, key=lambda x: x[1], reverse=True)
@@ -530,7 +530,7 @@ def start_run(processID, POPU_SIZE, MAX_GEN, CROSS_RATE, MUTATE_RATE, sub_storie
         
 def a_process_do(processID, POPU_SIZE, MAX_GEN, CROSS_RATE, MUTATE_RATE, sub_stories, save_path, next_part):
         rouge_score = []
-        for i in range(6): 
+        for i in range(3): 
             #chạy từng bộ
             start_run(processID, POPU_SIZE, MAX_GEN, CROSS_RATE, MUTATE_RATE, sub_stories, save_path, i) 
             #tính rouge của từng bộ
@@ -665,62 +665,10 @@ def main():
     stories = load_docs(directory)
     start_time = time.time()
 
-    #grid training
-    # n = 100 
-    # set_of_docs = [stories[i:i + n] for i in range(0, len(stories), n)]  
-    # rouge_score_valid = []
-    # for sub_stories in set_of_docs:
-        # rouge_score_1 = []
-        # for i in range(5): 
-        #     #chạy từng bộ
-        #     start_run(POPU_SIZE, MAX_GEN, CROSS_RATE, MUTATE_RATE, sub_stories, save_path, i) 
-        #     #tính rouge của từng bộ
-        #     rouge1, rouge2, rougeL = evaluate_rouge(save_path)
-        #     rouge_score_1.append(rouge1)
-        # weights_had_max_value = rouge_score_1.index(max(rouge_score_1))
-        
-        #chay weights do tren 1 tap ngau nhien
-        # random_part = random.choice(set_of_docs)
-        # while random_part == sub_stories:
-        #     random_part = random.choice(set_of_docs)
-        # print("best_weights_for_a_loop: " , weights_had_max_value )
-        # start_run(POPU_SIZE, MAX_GEN, CROSS_RATE, MUTATE_RATE, random_part, save_path_for_valid, weights_had_max_value)
-        
-
-        #test 1 set parameter
-        # start_run(POPU_SIZE, MAX_GEN, CROSS_RATE, MUTATE_RATE, sub_stories, save_path_for_valid, 4) 
-        # rouge1_valid, rouge2_valid, rougeL_valid = evaluate_rouge(save_path_for_valid)
-        # rouge_score_valid.append((4,rouge1_valid, rouge2_valid, rougeL_valid)) 
-
-
-
-
-        # rouge1_valid, rouge2_valid, rougeL_valid = evaluate_rouge(save_path_for_valid)
-        # rouge_score_valid.append((weights_had_max_value,rouge1_valid, rouge2_valid, rougeL_valid)) 
-
-    # res = max(rouge_score_valid, key = lambda i : i[1])
-    # print("final_best_weights: ", res[0])
-    # print("rouge 1: ", res[1])
-    # print("rouge 2: ", res[2])
-    # print("rouge L: ", res[3])
-
-    # fp = open("results2.txt",'w', encoding='utf-8')
-    # fp.write('\n'.join('{} , {} , {} , {} '.format(x[0],x[1], x[2], x[3]) for x in rouge_score_valid))
     
     multiprocess(6, POPU_SIZE, MAX_GEN, CROSS_RATE,
                  MUTATE_RATE, stories, save_path)
 
-    # multiprocess(5, POPU_SIZE, MAX_GEN, CROSS_RATE,
-    #              MUTATE_RATE, stories, save_path2, order_params = 1)
-
-    # multiprocess(5, POPU_SIZE, MAX_GEN, CROSS_RATE,
-    #              MUTATE_RATE, stories, save_path3, order_params = 2)
-
-    # multiprocess(5, POPU_SIZE, MAX_GEN, CROSS_RATE,
-    #              MUTATE_RATE, stories, save_path4, order_params = 3)
-
-    # multiprocess(5, POPU_SIZE, MAX_GEN, CROSS_RATE,
-    #              MUTATE_RATE, stories, save_path5, order_params = 4)
     print("--- %s mins ---" % ((time.time() - start_time)/(60.0*len(stories))))
 
 if __name__ == '__main__':
